@@ -31,3 +31,98 @@ Un "stage" dans Snowflake est comme une zone temporaire ou un point de passage o
 - CREATE OR REPLACE STAGE bucket_s3 URL = 's3://snowflake-lab-bucket/';
 
 <img width="757" height="62" alt="Image" src="https://github.com/user-attachments/assets/482a7394-8207-4734-b6d1-13745a211886" />
+
+## Format de fichiers (csv & json)
+
+### Format csv
+
+<img width="580" height="217" alt="Image" src="https://github.com/user-attachments/assets/c1a07b16-7551-46a6-bffc-45db1264be5e" />
+
+Cette commande SQL permet de définir un format de fichier personnalisé pour lire ou écrire des fichiers CSV.
+
+### Format json
+
+<img width="460" height="62" alt="Image" src="https://github.com/user-attachments/assets/9ca2ca9b-ed0b-466f-a7d8-073fe4c3b0e2" />
+
+Cette commande :
+
+- Crée un format de fichier nommé json_format, ou le remplace s’il existe déjà.
+
+- Indique que le format s’applique à des fichiers JSON.
+
+## Création des tables
+
+### Table créée à partir de fichiers csv
+
+<img width="467" height="141" alt="Image" src="https://github.com/user-attachments/assets/06527b42-b112-4b67-be74-357e468e5c44" />
+
+Pour créer les tables, nous avons utilisé la commande suivante :
+
+- CREATE OR REPLACE TABLE "nom de la table"(
+  "colonne1" string,
+  "Colonne2" integer,
+  etc
+  );
+
+L'instruction "Create or replace" crée une table ou la remplace si elle existe déjà. Les instructions à l'intérieur de la table permettent de créer les colonnes et de donner des types à ces colonnes. Pour les tables créées à partir des données des fichiers csv, il est possibile de créer toutes les colonnes au moment de la création de la table.
+
+### Table créée à partir de fichiers json
+
+<img width="573" height="62" alt="Image" src="https://github.com/user-attachments/assets/bb8f8c9a-89ee-4017-8fad-a82b04895e46" />
+
+L'instruction pour créer une table reste la même 'CREATE OR REPLACE TABLE "nom de la table"', la différence intervient au moment de la création des colonnes. En effet au moment de la création de la table, on peut créer une seule colonne de type "Variant".
+
+- CREATE OR REPLACE TABLE "nom de la table"(
+  "data" Variant,
+  );
+
+## La copie des données
+
+Après la création de chaque table, on devait copier les données. Pour le faire, on a utilisé une commande qui charge les données depuis le bucket s3 vers nos différentes tables en utilisant des règles de format (csv & json). La commande varie légèrement en fonction du type du ficher (json ou csv) ;
+
+- COPY INTO "nom de notre table" FROM @le_stage/le_fichier_a_charger FILE_FORMAT = (FORMAT_NAME = json_format/csv);
+
+### COPY INTO avec un fichier csv
+
+<img width="1030" height="27" alt="Image" src="https://github.com/user-attachments/assets/3ef38521-5683-4ff8-b6da-446f17f966cf" />
+
+### COPY INTO avec un fichier json
+
+<img width="992" height="46" alt="Image" src="https://github.com/user-attachments/assets/7237f17f-074b-4b79-8ce6-081df60a9350" />
+
+## Les vues
+
+On a créé des vues pour transformer les données.
+
+### json
+
+Après avoir créer les tables, on a créé des vues pour pouvoir afficher les données JSON sous forme tabulaire (comme une vraie table relationnelle) mais aussi pour avoir une vue propre. Pour y arriver nous avons utiliser la commande suivante :
+
+CREATE OR REPLACE VIEW "nom de la vue" AS
+SELECT
+value:"nom de la colonne"::string as "le nom que l'on veut donner",
+value:"nom de la colonne"::string as "le nom que l'on veut donner"
+FROM "nom de la table",
+LATERAL FLATTEN (input => data);
+
+<img width="522" height="327" alt="Image" src="https://github.com/user-attachments/assets/d59ef979-113a-4a6a-b532-1d4cd02492c3" />
+
+- Create or replace view : Crée ou remplace la vue si elle existe déjà.
+
+- AS : Permet de renomer la table, les colonne, la vue comme étant le résultat de l'instruction "SELECT"
+
+- value : Représente chaque objet du fichier JSON
+
+- ::STRING force le type de la donnée à STRING.
+
+- LATERAL FLATTEN permet d’extraire les éléments d’un tableau JSON.
+
+- data : Si chaque "data" dans le JSON est un objet dans un tableau, FLATTEN va parcourir chaque élément de ce tableau.
+
+## Pour vérifier
+
+Pour effectuer des vérifications au fur et à mesure que l'on évoluait, on affichait les tables avec cette instruction ;
+
+- select \* from "nom de la table";
+
+* \* : Permet de sélectionner toutes les colonnes de la table que l'on veut afficher.
