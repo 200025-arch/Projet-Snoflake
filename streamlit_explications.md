@@ -357,3 +357,199 @@ df3['industry_name'] = df3['INDUSTRY_NAME'].astype(str)
 - else: st.warning("Aucune donnée disponible pour la répartition.")
 
   - Affiche un message d’avertissement si le DataFrame est vide.
+
+
+
+#### Quatrième visualisation
+
+👉 Afficher la répartition des offres d’emploi par type d’emploi (temps plein, stage, temps partiel).
+
+##### Requête SQL :
+
+<img width="772" height="238" alt="Image" src="https://github.com/user-attachments/assets/0c521a43-fd98-4319-8c5c-017c01d42d44" />
+
+- formatted_work_type : champ qui contient le type d’emploi formaté (ex : "Full-time", "Internship", "Contract"...).
+
+- AS type_emploi : on renomme cette colonne pour l'affichage (en français) → ce sera plus clair dans le tableau ou graphique.
+
+- COUNT(\*) AS nb_offres : on compte le nombre total d’offres par type.
+
+* On utilise la table principale des offres d’emploi.
+
+* Elle contient toutes les colonnes utiles : titre, localisation, salaire, type d’emploi, etc.
+
+* On ne garde que les lignes où le type d’emploi est connu, ça évite d’avoir une catégorie "vide" dans le graphique.
+
+* On regroupe les offres par type d’emploi. Cela permet de compter combien d’offres sont dans chaque catégorie.
+
+* Trie les résultats du type d’emploi le plus représenté au moins représenté. Cela facilite la lecture du graphique (les plus fréquents sont en haut ou en premier).
+
+<img width="987" height="370" alt="Image" src="https://github.com/user-attachments/assets/47ccce38-943c-42a4-ae92-12ba6faa0104" />
+
+##### code streamlit
+
+<img width="1137" height="645" alt="Image" src="https://github.com/user-attachments/assets/782d6fa5-d2d1-4cec-bacb-075058aa3d61" />
+
+- La fonction run_query() exécute la requête query4 (celle que tu viens d’examiner).
+
+- Le résultat est un DataFrame Pandas (df4) contenant :
+
+  - TYPE_EMPLOI (ex : Full-time, Internship…)
+
+  - NB_OFFRES (le nombre d’offres par type)
+
+* Ce tableau est affiché directement dans Streamlit via st.dataframe(df4).
+
+* On vérifie que df4 contient des données avant d’essayer d’afficher un graphique.
+
+* NB_OFFRES → converti en nombre (float) pour pouvoir être utilisé dans Altair (:Q pour quantitatif).
+
+* TYPE_EMPLOI → renommé en type_emploi et converti en texte (str).
+
+* Nécessaire car Snowflake renvoie les colonnes en majuscules, et Altair ne gère pas bien les noms de colonnes en majuscules.
+
+* total_offres = int(df4['nb_offres'].sum()) :
+
+  - On calcule la somme de toutes les offres (nb_offres) pour afficher le total au centre du graphique.
+
+* .mark_arc(innerRadius=100)
+
+  - Crée un donut chart (graphique en anneau)
+
+* theta
+
+  - Contrôle la taille de chaque part, selon nb_offres
+
+* color
+
+  - Donne une couleur différente à chaque type d’emploi
+
+* tooltip
+
+  - Affiche infos au survol : type + nombre d’offres
+
+* properties(...)
+
+  - Définit la taille du graphique (600x500)
+
+- Crée une chart Altair séparée avec du texte centré.
+
+* Le texte affiche :
+
+  <img width="305" height="103" alt="Image" src="https://github.com/user-attachments/assets/ead1f79b-f355-4157-bc6e-413d396991f9" />
+
+* st.altair_chart(chart4 + text) :
+
+  - Additionne les deux graphiques Altair (chart4 + text) pour superposer :
+
+    - Le donut en fond
+
+    - Le texte total au centre
+
+<img width="1232" height="628" alt="Image" src="https://github.com/user-attachments/assets/d96d5096-1e7c-46c9-85d2-a923d2f6dc4f" />
+
+- else: st.warning("Aucune donnée disponible pour le type d’emploi.")
+
+  - Affiche un message d’avertissement si le DataFrame est vide.
+
+#### Cinquième visualisation
+
+👉 Afficher la répartition des offres d’emploi par type d’emploi (temps plein, stage, temps partiel).
+
+##### Requête SQL :
+
+<img width="1002" height="508" alt="Image" src="https://github.com/user-attachments/assets/f14d4644-82db-4c15-904c-94d35fadfb67" />
+
+- c.company_size : la taille de l'entreprise (ex: "1-10", "11-50", etc.)
+
+- COUNT(DISTINCT jp.job_id) : le nombre d’offres d’emploi distinctes (pour éviter les doublons)
+
+* jobs_postings_clean_named : une vue nettoyée des offres d’emploi, où les company_name numériques ont été remplacés par des noms.
+
+* companies_clean : une vue nettoyée des entreprises (avec leur taille, adresse, etc.)
+
+* La jointure est faite sur le nom de l’entreprise : jp.company_name = c.name.
+
+* WHERE c.company_size IS NOT NULL AND c.name IS NOT NULL :
+
+  - Évite les lignes où la taille ou le nom de l’entreprise est vide/inconnu.
+
+* GROUP BY c.company_size :
+
+  - Regroupe les offres d’emploi selon la taille de l’entreprise.
+
+Tri personnalisé :
+
+ORDER BY
+
+- CASE
+  - WHEN c.company_size = '1' THEN 1
+  - WHEN c.company_size = '2' THEN 2
+  - WHEN c.company_size = '3' THEN 3
+  - WHEN c.company_size = '4' THEN 4
+  - WHEN c.company_size = '5' THEN 5
+  - WHEN c.company_size = '6' THEN 6
+  - WHEN c.company_size = '7' THEN 7
+  - ELSE 8
+- END;
+
+* Permet de contrôler l’ordre d’affichage des tailles d’entreprise.
+
+<img width="1002" height="368" alt="Image" src="https://github.com/user-attachments/assets/6f0804be-a577-47e4-a960-29b5fd8c509a" />
+
+##### code streamlit
+
+<img width="917" height="525" alt="Image" src="https://github.com/user-attachments/assets/63a01210-dd88-4247-9fd2-827c77de4aae" />
+
+df5 = run_query(query5) & st.dataframe(df5):
+
+- run_query(query5) : exécute la requête sur Snowflake via session.sql(...)
+
+- Résultat stocké dans un DataFrame pandas df5
+
+- st.dataframe(df5) : affiche les résultats dans un tableau interactif
+
+if not df5.empty:
+
+- Permet de ne générer le graphique que s’il y a des données
+
+* NB_OFFRES → nb_offres : converti en numérique (au cas où ce serait du texte)
+
+* COMPANY_SIZE → company_size : converti en chaîne de caractères
+
+💡 Cela permet d’avoir des noms de colonnes plus simples et utilisables avec Altair.
+
+- alt.Chart(df5).mark_bar()
+
+  - Création d’un graphique en barres
+
+- x=alt.X(...)
+
+  - Axe X = taille d’entreprise (company_size), triée dans un ordre personnalisé
+
+- y=alt.Y(...)
+
+  - Axe Y = nombre d’offres (nb_offres)
+
+- color=alt.Color(...)
+
+  - Couleur des barres selon la taille d’entreprise
+
+- tooltip=[...]
+
+  - Affichage des infos au survol
+
+- .properties(...)
+
+  - Taille du graphique
+
+* st.altair_chart(chart5)
+
+  - Affiche le graphique Altair dans l’interface Streamlit
+
+<img width="1078" height="510" alt="Image" src="https://github.com/user-attachments/assets/9c606d40-9fda-4972-8e2d-23dcf2eaa518" />
+
+- else: st.warning("Aucune donnée disponible sur la taille des entreprises.")
+
+  - Affiche un message d’avertissement si le DataFrame est vide.
+
