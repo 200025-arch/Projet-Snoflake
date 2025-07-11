@@ -6,4 +6,5 @@ Le premier problème que nous avons rencontré c'était au niveau de l'affichage
 
 - data:company_name
 
-Mais on avait pas les valeurs. La solution que l'on trouvé pour résoudre ce problème est "LATERAL FLATTEN", c'est pour cela que nous avons la syntaxe suivante :
+Mais on avait pas les valeurs. La solution que l'on trouvé pour résoudre ce problème est "LATERAL
+FLATTEN", c'est pour cela que nous avons la syntaxe suivante :
